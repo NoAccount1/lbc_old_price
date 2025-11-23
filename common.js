@@ -92,44 +92,53 @@ function createDivOldDate(id, currentDateClass, oldDate, currentDate) {
     return divOldDate;
 }
 
-function createTag(content, classList = "text-on-support-container bg-support-container") {
+function createTag(content, ...classList) {
+    if (classList.length === 0)
+        classList = ["text-on-support-container", "bg-support-container"];
     const tag = document.createElement("span");
-    tag.setAttribute("class", ("box-border default:inline-flex default:w-fit items-center justify-center gap-sm whitespace-nowrap text-caption font-bold px-md h-sz-20 rounded-full " + classList));
+    tag.classList.add("box-border", "default:inline-flex", "default:w-fit", "items-center", "justify-center", "gap-sm", "whitespace-nowrap", "text-caption", "font-bold", "px-md", "h-sz-20", "rounded-full")
+    tag.classList.add(classList)
+
     tag.setAttribute("data-spark-component", "tag");
 
     tag.innerHTML = content;
-    
+
     return tag
 }
 
-function createDateTag(preText, date, include_hour = true) {
-    const tag = document.createElement("span");
-    const gap = getGapWithToday(date);
-    tag.setAttribute("class", ("box-border default:inline-flex default:w-fit items-center justify-center gap-sm whitespace-nowrap text-caption font-bold px-md h-sz-20 rounded-full text-on-support-container mr-md " + (gap.inDays > 30 ? 'bg-alert' : 'bg-support-container')));
-    tag.setAttribute("data-spark-component", "tag");
-
+function formatDate(date, include_hour = true) {
+    let dateString;
     try {
         if (include_hour) {
-            tag.innerHTML = preText + date.toLocaleDateString("fr-FR", {
+            dateString = date.toLocaleDateString("fr-FR", {
                 year: "numeric",
                 month: "2-digit",
                 day: "2-digit",
                 hour: "2-digit",
                 minute: "2-digit"
-            }).replace(/\s+/g, ' à ') + gap.asString;
+            }).replace(/\s+/g, ' à ');
         } else {
-            tag.innerHTML = preText + date.toLocaleDateString("fr-FR", {
+            dateString = date.toLocaleDateString("fr-FR", {
                 year: "numeric",
                 month: "2-digit",
                 day: "2-digit",
-            }) + gap.asString;
+            });
         }
     } catch (e) {
         err(e);
     }
-
-    return tag;
+    return dateString
 }
+// function createDateTag(preText, date, include_hour = true) {
+//     const tag = document.createElement("span");
+//     const gap = getGapWithToday(date);
+//     tag.setAttribute("class", ("box-border default:inline-flex default:w-fit items-center justify-center gap-sm whitespace-nowrap text-caption font-bold px-md h-sz-20 rounded-full text-on-support-container mr-md " + (gap.inDays > 30 ? 'bg-alert' : 'bg-support-container')));
+//     tag.setAttribute("data-spark-component", "tag");
+
+
+
+//     return tag;
+// }
 
 function getGapWithToday(date) {
     const gapInMs = new Date().getTime() - date.getTime();
@@ -149,10 +158,10 @@ function getGapWithToday(date) {
         }
     }
 
-    return {inDays: gapInDays, inMs: gapInMs, asString: gapString};
+    return { inDays: gapInDays, inMs: gapInMs, asString: gapString };
 }
 
-function parseDate(dateString){
+function parseDate(dateString) {
     const [year, month, day] = dateString.split('/').reverse().map(n => parseInt(n, 10));
 
     return new Date(year, month - 1, day);

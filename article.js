@@ -15,7 +15,7 @@ async function applyOldPrice4Article(article) {
         } else {
             displayOldDateInElement(article, postId, currentDate, currentDate)
         }
-    } catch (e) {err(e)}
+    } catch (e) { err(e) }
 
     try {
         const currentPrice = datas?.price[0];
@@ -53,12 +53,17 @@ async function applyOldPrice4Article(article) {
     try {
         moveProtectionVoyageur(article);
     } catch (e) {err(e)}
+    try {
+        moveProtectionPanne(article);
+    } catch (e) {err(e)}
+
+    addScrollToLocationTag();
 }
 
 function displayOldDateInElement(element, id, oldDate, currentDate) {
     const exist = element.querySelectorAll('[id^="old_date_to_display_"]');
     if (exist) {
-         for (element of exist) {
+        for (element of exist) {
             element.parentElement.removeChild(element);
         }
     }
@@ -79,15 +84,21 @@ function displayOldDateInElement(element, id, oldDate, currentDate) {
         return;
     }
 
-    const spanDatePubliTag = createDateTag("Modifié le ", new Date(currentDate));    
+    const todayDate = new Date(currentDate);
+
+    let gap = getGapWithToday(todayDate)
+    let datePubliTag = formatDate(todayDate);
+    const spanDatePubliTag = createTag(`Publié le ${datePubliTag + gap.asString}`);
+    spanDatePubliTag.classList.add("text-on-support-container", "mr-md", (gap.inDays > 30 ? "bg-alert" : "bg-support-container"))
 
     if (spanDatePubliTag) {
         spanDatePubliTag.setAttribute("id", "old_date_to_display_modified");
         tagsContainer.prepend(spanDatePubliTag);
     }
 
-    if (oldDate) {
-        const spanDateModifTag = createDateTag("Publié le ", new Date(oldDate));
+    if (oldDate && (oldDate !== currentDate)) {
+        let dateModifTag = formatDate(new Date(currentDate));
+        const spanDateModifTag = createTag(`Modifié le ${dateModifTag}`);
 
         if (spanDateModifTag) {
             spanDateModifTag.setAttribute("id", "old_date_to_display_published");
@@ -152,7 +163,7 @@ function enhanceArticleCritereDisplay(article, datas) {
     const critereDatePmes = article.querySelector("[data-qa-id='criteria_item_issuance_date']");
 
     if (critereDatePmes && dateMes) {
-        const age = mDiff/12;
+        const age = mDiff / 12;
         critereDatePmes.innerHTML = critereDatePmes.innerHTML.replaceAll(dateMes, `${dateMes} (${Math.round(age * 10) / 10} an${age > 1 ? 's' : ''})`);
     }
 }
@@ -175,6 +186,12 @@ function moveProtectionVoyageur(article) {
     moveDivAside(article, divProtectionVoyageur, "protectionVoyageur");
 }
 
+function moveProtectionPanne(article) {
+    const divProtectionPanne = document.evaluate("//span[contains(., 'Protection Panne')]", article, null, XPathResult.ANY_TYPE, null).iterateNext()?.parentElement?.parentElement;
+
+    moveDivAside(article, divProtectionPanne, "protectionPanne");
+}
+
 function movePackSerenite(article) {
     const divPackSerenite = document.evaluate("//p[contains(., 'Pack Sérénité*')]", article, null, XPathResult.ANY_TYPE, null).iterateNext()?.parentElement?.parentElement;
 
@@ -190,10 +207,10 @@ function moveLesPLus(article) {
 function moveDivAside(container, div, type) {
     if (div && !document.querySelector(`[lbc_old_price_move='${type}']`)) {
 
-        div.classList.remove("py-xl","border-b-sm","border-outline")
+        div.classList.remove("py-xl", "border-b-sm", "border-outline")
         const asideRefSection = container.querySelector("aside section");
         const newDiv = document.createElement("div");
-        newDiv.setAttribute(`lbc_old_price_move`,type)
+        newDiv.setAttribute(`lbc_old_price_move`, type)
         newDiv.innerHTML = `<${asideRefSection.nodeName} class='${asideRefSection.classList}'></${asideRefSection.nodeName}>`;
         newDiv.firstChild.appendChild(div);
         asideRefSection.after(newDiv);
@@ -211,4 +228,22 @@ function enhanceAdviewSticky() {
 
 function getPinSvgElement() {
     return `<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="w-sz-16 h-sz-16 mr-sm inline-block" data-spark-component="icon" aria-hidden="true"><path fill-rule="evenodd" clip-rule="evenodd" d="M15.3754 8.89783C15.3754 10.7038 13.8643 12.1678 12.0003 12.1678C10.1363 12.1678 8.6252 10.7038 8.6252 8.89783C8.6252 7.09187 10.1363 5.62785 12.0003 5.62785C13.8643 5.62785 15.3754 7.09187 15.3754 8.89783ZM13.3044 8.89783C13.3044 9.59562 12.7205 10.1613 12.0003 10.1613C11.2801 10.1613 10.6962 9.59562 10.6962 8.89783C10.6962 8.20004 11.2801 7.63437 12.0003 7.63437C12.7205 7.63437 13.3044 8.20004 13.3044 8.89783Z"></path><path fill-rule="evenodd" clip-rule="evenodd" d="M12 2.00024C7.58172 2.00024 4 5.47039 4 9.75102C4 10.8868 4.41304 12.2052 4.97459 13.4754C5.5461 14.7681 6.31556 16.1078 7.12222 17.3163C7.92805 18.5235 8.78895 19.6265 9.55506 20.44C9.9359 20.8445 10.3142 21.1998 10.6676 21.4625C10.8442 21.5938 11.0353 21.7176 11.2346 21.8123C11.4223 21.9016 11.6899 22.0002 12 22.0002C12.3101 22.0002 12.5777 21.9016 12.7654 21.8123C12.9647 21.7176 13.1558 21.5938 13.3324 21.4625C13.6858 21.1998 14.0641 20.8445 14.4449 20.44C15.211 19.6265 16.0719 18.5235 16.8778 17.3163C17.6844 16.1078 18.4539 14.7681 19.0254 13.4754C19.587 12.2052 20 10.8868 20 9.75102C20 5.47039 16.4183 2.00024 12 2.00024ZM6.07104 9.75102C6.07104 6.57856 8.72552 4.00676 12 4.00676C15.2745 4.00676 17.929 6.57856 17.929 9.75102C17.929 10.4785 17.6468 11.4975 17.1217 12.6853C16.6065 13.8506 15.8978 15.0894 15.1387 16.2266C14.3788 17.3651 13.5862 18.3749 12.915 19.0877C12.5772 19.4464 12.2909 19.7076 12.0715 19.8707C12.0456 19.89 12.0218 19.907 12 19.922C11.9782 19.907 11.9544 19.89 11.9285 19.8707C11.7091 19.7076 11.4228 19.4464 11.085 19.0877C10.4138 18.3749 9.62122 17.3651 8.86127 16.2266C8.10215 15.0894 7.39349 13.8506 6.87834 12.6853C6.35322 11.4975 6.07104 10.4785 6.07104 9.75102Z"></path></svg>`;
+}
+
+function addScrollToLocationTag() {
+    tagList = Array.from(document.querySelector('[data-qa-id="adview_spotlight_description_container"]').lastChild.children);
+
+    try {
+        tag = tagList.filter(tag => tag.firstChild.nodeName === "svg")[0];
+
+        tag.style.cursor = "pointer";
+
+        tag.addEventListener("click", (event) => {
+            document.getElementById("map").scrollIntoView({
+                behavior: 'smooth'
+            });
+        })
+    } catch (e) {
+        err(`Missing location tag\n${e}`);
+    }
 }

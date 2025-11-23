@@ -19,12 +19,26 @@ if (typeof browser !== "undefined") {
     start();
 })();
 
+let hasTerminated = false
+
 function start() {
     document.onreadystatechange = () => {
         if (document.readyState === "complete") {
-            setTimeout(main(), 100);
+            setTimeout(() => {
+                log("Running with readystate");
+                main();
+            }, 100);
         }
     };
+
+    // Fallback when onreadystatechange doesn't trigger
+    setTimeout(() => {
+        if (!hasTerminated) {
+            log("Running with fallback");
+            main();
+            clearTimeout();
+        }
+    }, 2500)
 }
 
 function main() {
@@ -36,7 +50,7 @@ function main() {
 
     var allAdItems = document.querySelectorAll('[data-qa-id="aditem_container"]');
 
-    if (document.URL === "https://www.leboncoin.fr/favorites") {
+    if (document.URL.endsWith("/favorites")) {
         applyTag4Favorites();
     }
 
@@ -44,19 +58,5 @@ function main() {
         applyOldPrice4ListAds(allAdItems);
     }
 
-    tagList = Array.from(document.querySelector('[data-qa-id="adview_spotlight_description_container"]').lastChild.children);
-
-    try {
-        tag = tagList.filter(tag => tag.firstChild.nodeName === "svg")[0];
-
-        tag.style.cursor = "pointer";
-
-        tag.addEventListener("click", (event) => {
-            document.getElementById("map").scrollIntoView({
-                behavior: 'smooth'
-            });
-        })
-    } catch (e) {
-        err(`Missing location tag\n${e}`)
-    }
+    hasTerminated = true;
 }

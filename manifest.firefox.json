@@ -26,7 +26,8 @@
         "main.js",
         "ads.js",
         "article.js",
-        "common.js"
+        "common.js",
+        "favorites.js"
       ]
     }
   ]
